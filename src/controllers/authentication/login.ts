@@ -3,24 +3,44 @@ import { UserModel } from "../../models/user/user";
 import { Request, Response } from "express";
 import { SingleApiResponse } from "../../helpers/response";
 import { IUser } from "../../interface/user/user";
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 //#endregion
 
 //#region Action
 const Login = async (req: Request, res: Response) => {
     try {
-        
+
         const email = req.body.email;
-        const password = req.body.password;
+        const password = req.body.password
 
-        const user = await UserModel.findOne<IUser>({ email: email, password: password })
+        // Fetch user based on email and password
+        const user = await UserModel.findOne<IUser>({ email: email })
 
-        if(user)
-            res.status(200).json(SingleApiResponse({success: true, data: user, statusCode: 200 }))
-        else
-            res.status(200).json(SingleApiResponse({success: true, data: null, statusCode: 404 }))
+        if (!user)
+            res.status(404).json(SingleApiResponse({ success: true, data: null, statusCode: 404 }))
+        else {
+
+            // Check if hash password is equal
+            const isPasswordMatch = await bcrypt.compare(password, user.password)
+
+            // Flagger for password
+            if (!isPasswordMatch)
+                res.status(404).json(SingleApiResponse({ success: true, data: null, statusCode: 404 }))
+            else {
+
+                const secretKey = process.env.TOKEN_KEY
+                const token = jwt.sign({ _id: user._id.toString(), name: user.email }, `${secretKey}`, {
+                    expiresIn: '2h'
+                })
+
+                res.status(200).json(SingleApiResponse({ success: true, data: { user, token: token }, statusCode: 200 }))
+
+            }
+        }
 
     } catch (error: any) {
-        res.status(500).json(SingleApiResponse({success: false, data: null, statusCode: 500}))
+        res.status(500).json(SingleApiResponse({ success: false, data: null, statusCode: 500 }))
     }
 }
 

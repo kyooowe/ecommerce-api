@@ -11,7 +11,7 @@ const StatusCodeChecker = (statusCode: number) => {
         return 'Something error occured, please contact administrator!'
 }
 
-
+// For multiple data response
 const ApiResponse = ({ success, data, statusCode }: IResponse) => {
     return {
         count: data === null || data === undefined ? 0 : data.length,
@@ -22,6 +22,7 @@ const ApiResponse = ({ success, data, statusCode }: IResponse) => {
     }
 }
 
+// For single data response
 const SingleApiResponse = ({ success, data, statusCode}: IResponse) => {
     return {
         count: 1,
